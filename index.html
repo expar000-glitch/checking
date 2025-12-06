@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PocketLikhi By Apu</title>
+    <!-- ফন্ট এবং আইকন -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ১. স্প্ল্যাশ স্ক্রিন (শুরুর স্ক্রিন) -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-circle">
+                <i class="ri-wallet-3-line"></i>
+            </div>
+            <h1>PocketLikhi</h1>
+            <p class="slogan">টাকা উড়ে গেলেও হিসাব উড়বে না।</p>
+            <div class="loader-line"></div>
+            <p class="dev-credit">Developed by apu</p>
+        </div>
+    </div>
+
+    <!-- ২. লক স্ক্রিন (পিন নিরাপত্তা) -->
+    <div id="lock-screen" class="hidden">
+        <div class="lock-content">
+            <i class="ri-lock-2-fill"></i>
+            <h2>নিরাপত্তা পিন দিন</h2>
+            <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
+            <div class="numpad" id="numpad">
+                <!-- জাভাস্ক্রিপ্ট দিয়ে জেনারেট হবে -->
+            </div>
+            <p class="forgot-pin" onclick="resetDataWithConfirmation()">পিন ভুলে গেছেন? (ডাটা রিসেট করুন)</p>
+        </div>
+    </div>
+
+    <!-- ৩. মেইন অ্যাপ কন্টেইনার -->
+    <div id="app-container" class="hidden">
+        
+        <!-- ফিক্সড হেডার -->
+        <header class="main-header">
+            <div class="header-top">
+                <div>
+                    <h2 class="app-name">PocketLikhi</h2>
+                    <p class="app-slogan">টাকা উড়ে গেলেও হিসাব উড়বে না।</p>
+                </div>
+                <div class="header-buttons">
+                    <button class="icon-btn" onclick="toggleTheme()" title="থিম পরিবর্তন">
+                        <i class="ri-sun-line" id="theme-icon"></i>
+                    </button>
+                    <button class="icon-btn" onclick="openSettings()" title="সেটিংস">
+                        <i class="ri-settings-3-line"></i>
+                    </button>
+                    <button class="icon-btn" onclick="switchTab('tab-profile')" title="প্রোফাইল">
+                        <i class="ri-user-3-line"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="header-greeting">
+                <span id="greeting-text">শুভ সকাল</span>, <span id="current-date-bn">তারিখ লোড হচ্ছে...</span>
+            </div>
+        </header>
+
+        <!-- স্ক্রল কন্টেন্ট এরিয়া -->
+        <main id="main-content">
+
+            <!-- ট্যাব ১: হোম -->
+            <div id="tab-home" class="tab-view active">
+                <!-- ব্যালেন্স কার্ড -->
+                <div class="glass-card balance-wrapper">
+                    <p class="label">বর্তমান ব্যালেন্স</p>
+                    <h1 class="amount">৳ <span id="total-balance">0</span></h1>
+                    
+                    <!-- বাজেট বার (লুকানো থাকবে যদি বাজেট সেট না থাকে) -->
+                    <div id="budget-status" class="hidden">
+                        <div class="budget-bar-bg">
+                            <div class="budget-bar-fill" id="budget-fill"></div>
+                        </div>
+                        <p class="budget-text">বাজেট বাকি: <span id="budget-remaining">0</span> টাকা</p>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-box income">
+                            <span>মোট জমা</span>
+                            <span id="home-income">৳0</span>
+                        </div>
+                        <div class="stat-box expense">
+                            <span>মোট খরচ</span>
+                            <span id="home-expense">৳0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- খরচের চার্ট -->
+                <div class="chart-section">
+                    <h3>খরচের ধরণ (এই মাস)</h3>
+                    <div class="chart-container-home">
+                        <svg id="home-donut-chart" viewBox="0 0 36 36" class="donut-chart"></svg>
+                        <div class="chart-center">
+                            <span id="home-chart-total">মোট</span>
+                        </div>
+                    </div>
+                    <div id="home-legend" class="legend-grid"></div>
+                </div>
+
+                <!-- মিনি ক্যালেন্ডার ও জোকস -->
+                <div class="section-title">
+                    <h3>দিনভিত্তিক বিস্তারিত</h3>
+                </div>
+                <div class="mini-calendar-wrapper">
+                    <input type="date" id="home-date-picker" class="date-picker-btn">
+                    <div id="day-summary-card" class="day-summary">
+                        <!-- এখানে ডায়নামিক ডাটা আসবে -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ট্যাব ২: হিসাব (পুরো ক্যালেন্ডার) -->
+            <div id="tab-hisab" class="tab-view printable-area">
+                <div class="calendar-header">
+                    <button onclick="changeMonth(-1)"><i class="ri-arrow-left-s-line"></i></button>
+                    <h3 id="calendar-month-name">March 2025</h3>
+                    <button onclick="changeMonth(1)"><i class="ri-arrow-right-s-line"></i></button>
+                </div>
+                
+                <!-- মাসিক সামারি -->
+                <div class="month-summary-box">
+                    <div class="month-stats">
+                        <div>আয়: <span class="inc" id="month-inc-summ">0</span></div>
+                        <div>ব্যয়: <span class="exp" id="month-exp-summ">0</span></div>
+                    </div>
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+
+            <!-- ট্যাব ৩: নোটস -->
+            <div id="tab-notes" class="tab-view">
+                <div class="notes-header">
+                    <h3>স্মার্ট নোটস</h3>
+                    <div class="group-selector">
+                        <select id="note-group-select" onchange="renderNotes()">
+                            <option value="General">সাধারণ</option>
+                            <!-- ডায়নামিক অপশন -->
+                        </select>
+                        <button onclick="openAddGroupModal()" class="add-grp-btn"><i class="ri-add-line"></i></button>
+                    </div>
+                </div>
+                <p class="note-hint">Enter = নতুন লাইন | Backspace = ডিলেট</p>
+                <div id="notes-container" class="notes-list"></div>
+            </div>
+
+            <!-- ট্যাব ৪: জাদু ক্যালকুলেটর -->
+            <div id="tab-zadu" class="tab-view">
+                <div class="zadu-header">
+                    <h2>🎩 যাদু ক্যালকুলেটর</h2>
+                    <p>গ্রুপ খরচের হিসাব এক নিমিষে!</p>
+                </div>
+
+                <!-- স্টেপ ১: বন্ধুদের নাম যোগ করুন -->
+                <div class="zadu-step">
+                    <div class="step-heading">
+                        <span class="step-number">১</span>
+                        <h4>বন্ধুদের নাম যোগ করুন</h4>
+                    </div>
+                    <div class="friend-input-row">
+                        <input type="text" id="zadu-friend-input" class="zadu-input" 
+                               placeholder="বন্ধুর নাম (যেমন: অপু)" 
+                               onkeydown="if(event.key==='Enter') addZaduFriend()">
+                        <button onclick="addZaduFriend()" class="zadu-add-btn">
+                            <i class="ri-add-line"></i> যোগ করুন
+                        </button>
+                    </div>
+                    <div id="zadu-friends-list" class="friends-list"></div>
+                </div>
+
+                <!-- স্টেপ ২: লেনদেন যোগ করুন -->
+                <div class="zadu-step">
+                    <div class="step-heading">
+                        <span class="step-number">২</span>
+                        <h4>লেনদেন যোগ করুন</h4>
+                    </div>
+                    <div class="zadu-form">
+                        <select id="zadu-payer" class="zadu-select">
+                            <option value="">কে দিয়েছে?</option>
+                        </select>
+                        
+                        <div class="amount-input-wrapper">
+                            <span>৳</span>
+                            <input type="number" id="zadu-amount" placeholder="0" inputmode="numeric">
+                        </div>
+                        
+                        <div class="for-whom-section">
+                            <label>কার কার জন্য?</label>
+                            <div id="zadu-for-whom" class="checkbox-group"></div>
+                        </div>
+                        
+                        <input type="text" id="zadu-note" class="zadu-input" placeholder="নোট (যেমন: দুপুরের খাবার)">
+                        
+                        <button onclick="addZaduTransaction()" class="btn-primary">
+                            <i class="ri-add-circle-line"></i> লেনদেন যোগ করুন
+                        </button>
+                    </div>
+                </div>
+
+                <!-- স্টেপ ৩: লেনদেন লিস্ট -->
+                <div class="zadu-step">
+                    <div class="step-heading">
+                        <span class="step-number">📝</span>
+                        <h4>সব লেনদেন</h4>
+                    </div>
+                    <div id="zadu-transactions-list" class="transactions-list"></div>
+                </div>
+
+                <!-- স্টেপ ৪: ফাইনাল হিসাব -->
+                <div class="zadu-step">
+                    <div class="step-heading">
+                        <span class="step-number">🎯</span>
+                        <h4>ফাইনাল হিসাব</h4>
+                    </div>
+                    <div id="zadu-result" class="zadu-result-box"></div>
+                </div>
+                
+                <!-- রিসেট বাটন -->
+                <div class="zadu-actions">
+                    <button onclick="resetZadu()" class="btn-outline">
+                        <i class="ri-refresh-line"></i> রিসেট করুন
+                    </button>
+                </div>
+            </div>
+
+            <!-- ট্যাব ৫: গাইডলাইন -->
+            <div id="tab-guide" class="tab-view">
+                <div class="guide-header">
+                    <h2>📖 PocketLikhi ব্যবহার নির্দেশিকা</h2>
+                    <p>"টাকা উড়ে গেলেও হিসাব উড়বে না।"</p>
+                </div>
+
+                <div class="guide-content">
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-home-4-line"></i>
+                            <h3>🏠 হোম (Home) - আপনার ড্যাশবোর্ড</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <p>অ্যাপ খুললেই যা দেখবেন, সেটাই হোম।</p>
+                            <ul>
+                                <li><strong>ব্যালেন্স:</strong> সবার উপে বড় করে লেখা টাকাটা হলো আপনার বর্তমান অবস্থা। (এটা মাইনাস হলে বুঝবেন বিপদ!)</li>
+                                <li><strong>বাজেট:</strong> মাসের শুরুতে একটা বাজেট ঠিক করেছেন তো? এখানে দেখতে পাবেন আর কত টাকা ওড়ানোর সুযোগ আছে।</li>
+                                <li><strong>চার্ট (Chart):</strong> একটা গোল চাকা দেখছেন? ওটা আপনার খরচের ময়নাতদন্ত। কোন খাতে (খাবার, মেস, আড্ডা) কত টাকা গেল, সব এখানে পাবেন।</li>
+                                <li><strong>আজকের হিসাব:</strong> ক্যালেন্ডারের আজকের তারিখে তাকালে বুঝবেন আজ পকেট কতটা হালকা হলো।</li>
+                            </ul>
+                            <p class="guide-tip">💡 <strong>টিপস:</strong> এখানে যদি দেখেন খরচ ০ টাকা, তাহলে অ্যাপ আপনাকে জিজ্ঞেস করতেই পারে—"বিয়ে-শাদী করার মতলব আছে নাকি?" 😉</p>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-calendar-2-line"></i>
+                            <h3>📅 হিসাব (Calendar & History)</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <p>মাসের মাঝখানে এসে যদি মনে হয়—"এত টাকা গেল কই?", তখন সোজা এই ট্যাবে চলে আসবেন।</p>
+                            <ul>
+                                <li><strong>দিনভিত্তিক:</strong> ক্যালেন্ডারের যেকোনো তারিখে ক্লিক করুন। ওইদিন রিকশা ভাড়া কত ছিল বা চা-সিগারেটে কত গেল—সব বেরিয়ে আসবে।</li>
+                                <li><strong>মাসিক:</strong> পুরো মাসের একটা বড় চিত্র দেখতে চাইলে 'মাসিক' বাটনে চাপ দিন। মোট কত আয় আর কত ব্যয়—এক পলকে সব ক্লিয়ার।</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-magic-line"></i>
+                            <h3>🎩 জাদু ক্যালকুলেটর (The Magic)</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <p>মেস লাইফের বা বন্ধুদের আড্ডার সবচেয়ে বড় সমস্যা—"বিল কে দিল আর কে পাবে?"। এই গ্যাঞ্জাম মেটানোর জন্যই এই জাদু!</p>
+                            <div class="guide-example">
+                                <h4>উদাহরণ:</h4>
+                                <p>ধরুন আপনি, রাফি আর হাসান মিলে বিরিয়ানি খেতে গেলেন।</p>
+                                <ul>
+                                    <li>বিল আসলো ৬০০ টাকা।</li>
+                                    <li>আপনি দিলেন ৫০০ টাকা, হাসান দিল ১০০ টাকা, রাফি কিছুই দিল না।</li>
+                                    <li>এখন কে কাকে কত দিবে? মাথা নষ্ট!</li>
+                                </ul>
+                                <h4>সমাধান:</h4>
+                                <ol>
+                                    <li><strong>নাম দিন:</strong> প্রথমে সবার নাম লিখুন (অপু, রাফি, হাসান)।</li>
+                                    <li><strong>খরচ বসান:</strong> কে কত টাকা দিল সেটা বসিয়ে দিন।</li>
+                                    <li><strong>ম্যাজিক বাটন:</strong> "🔮 জাদুর হিসাব দেখুন" বাটনে চাপ দিন।</li>
+                                    <li><strong>ফলাফল:</strong> অ্যাপ বলে দিবে—"রাফি অপুকে ২০০ টাকা দিবে"। ঝামেলা শেষ!</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-file-list-3-line"></i>
+                            <h3>📝 স্মার্ট নোটস (Smart Notes)</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <p>বাজারের ফর্দ বা মেসের বাজার—সব কিছু এখানে লিখে রাখতে পারেন।</p>
+                            <ul>
+                                <li><strong>সহজ সিস্টেম:</strong> একটা আইটেম লিখুন আর Enter চাপুন। অটোমেটিক ১, ২, ৩ নাম্বার পড়ে যাবে।</li>
+                                <li><strong>মুছবেন?</strong> লাইনটা খালি করে Backspace চাপলেই গায়েব!</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-user-3-line"></i>
+                            <h3>👤 প্রোফাইল (Profile)</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <p>এখানে আপনার এবং অ্যাপের পেছনের কারিগরের (আমার) একটু পরিচয় পাবেন।</p>
+                            <p>কোনো সমস্যা হলে বা পরামর্শ থাকলে এখান থেকে সরাসরি আমাকে কল বা মেইল করতে পারবেন।</p>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-section-header">
+                            <i class="ri-settings-3-line"></i>
+                            <h3>⚙️ সেটিংস ও সিকিউরিটি</h3>
+                        </div>
+                        <div class="guide-section-body">
+                            <ul>
+                                <li><strong>বাজেট সেট:</strong> মাসের শুরুতে আপনার লিমিট ঠিক করে দিন।</li>
+                                <li><strong>পিন লক (PIN Lock):</strong> ফোন যদি বন্ধুদের হাতেও যায়, আপনার খরচের হিসাব কেউ দেখবে না। ৪ সংখ্যার পিন দিয়ে অ্যাপ লক করে রাখুন।</li>
+                                <li><strong>ডার্ক মোড:</strong> রাতে চোখের আরামের জন্য ডার্ক মোড ব্যবহার করতে পারেন।</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="guide-footer">
+                        <h3>শেষ কথা:</h3>
+                        <p>টাকা উড়ে গেলেও হিসাব যেন উড়ে না যায়, সেই চেষ্টাই আমাদের। অ্যাপটি ব্যবহার করার জন্য ধন্যবাদ! ❤️</p>
+                        <p style="text-align: center; margin-top: 20px; color: var(--primary); font-weight: 600;">~ অনিকুজ্জামান অপু</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ট্যাব ৬: প্রোফাইল (Apu's Info) -->
+            <div id="tab-profile" class="tab-view">
+                <div class="profile-card glass-card">
+                    <div class="profile-header">
+                        <h2>PocketLikhi</h2>
+                        <p class="slogan-mini">টাকা উড়ে গেলেও হিসাব উড়বে না।</p>
+                    </div>
+                    
+                    <div class="dev-info">
+                        <p class="role-tag">The Mind Behind PocketLikhi</p>
+                        <h3>অনিকুজ্জামান অপু</h3>
+                        <p class="sub-role">Student | Dreamer | Thinker</p>
+                        
+                        <div class="bio-section">
+                            <h4>আমার সম্পর্কে:</h4>
+                            <p>হ্যালো, আমি অপু। পড়ছি নৌবাহিনী কলেজ, ঢাকা-এ (HSC ব্যাচ '২৬)। পড়াশোনার পাশাপাশি Navians' Science Club-এর IT Wings Secretary হিসেবে দায়িত্ব পালন করছি। আমি ঘুরতে ভালোবাসি, ছবি তুলতে পছন্দ করি আর অবসরে প্রযুক্তির খুঁটিনাটি নিয়ে ঘাটাঘাটি করি। মাঝে মাঝে শখের বসে বিভিন্ন সমস্যার মজার মজার সমাধানও বের করি।</p>
+                        </div>
+
+                        <div class="bio-section">
+                            <h4>অ্যাপটি বানানোর গল্প:</h4>
+                            <p>মেসে ওঠার পর দেখলাম খাতা-কলমে টাকার হিসাব রাখাটা বেশ ঝামেলাপূর্ণ, মাস শেষে কিছুতেই হিসাব মিলত না। তখন মনে হলো, আমার নিজের জন্য এমন একটা আপডেটেড ব্যবস্থা দরকার যেখানে সহজেই সব হিসাব রাখা যাবে। সেই প্রয়োজন থেকেই মাত্র ১ দিনের মধ্যে অ্যাপটির প্ল্যানিং ও ডেভেলপমেন্ট শেষ করে ফেলি।</p>
+                        </div>
+
+                        <div class="bio-section">
+                             <h4>ভবিষ্যৎ ভাবনা:</h4>
+                             <p>সামনে খুব বড় কোনো প্রতিশ্রুতি দিচ্ছি না। তবে নিজের উদ্যম আর স্বপ্নগুলো যদি ধরে রাখতে পারি, তবে আশা রাখি ভবিষ্যতে এমন আরও অনেক সময়োপযোগী ও উপকারী জিনিস আপনাদের উপহার দিতে পারব।</p>
+                        </div>
+
+                        <div class="contact-info">
+                            <p><i class="ri-calendar-check-line"></i> তৈরি: <span id="app-creation-date">০৩ ডিসেম্বর ২০২৫</span></p>
+                            <p><i class="ri-phone-line"></i> <a href="tel:+88018410207" class="contact-link">+88018410207</a></p>
+                            <p><i class="ri-mail-line"></i> <a href="mailto:aniq.apu07@gmail.com" class="contact-link">aniq.apu07@gmail.com</a></p>
+                            <a href="https://www.facebook.com/Aniquzzaman.Apu07/" target="_blank" class="fb-link">
+                                <i class="ri-facebook-circle-fill"></i> Facebook Profile
+                            </a>
+                        </div>
+
+                        <div class="footer-credit">
+                            Made with ❤️ in Bangladesh<br>
+                            © 2025 All Rights Reserved by অনিকুজ্জামান অপু
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ফ্লোটিং অ্যাড বাটন (FAB) -->
+        <button class="fab-main" onclick="openTransModal()">
+            <i class="ri-add-line"></i>
+        </button>
+
+        <!-- নিচের নেভিগেশন বার -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('tab-home', this)">
+                <i class="ri-home-4-line"></i> <span>হোম</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-hisab', this)">
+                <i class="ri-calendar-2-line"></i> <span>হিসাব</span>
+            </button>
+            <div class="nav-spacer"></div> <!-- FAB এর জন্য জায়গা -->
+            <button class="nav-item" onclick="switchTab('tab-notes', this)">
+                <i class="ri-file-list-3-line"></i> <span>নোটস</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-zadu', this)">
+                <i class="ri-magic-line"></i> <span>জাদু</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-guide', this)">
+                <i class="ri-book-open-line"></i> <span>গাইড</span>
+            </button>
+        </nav>
+
+        <!-- সেটিংস মোডাল -->
+        <div id="modal-settings" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>সেটিংস</h3>
+                    <button onclick="closeModal('modal-settings')"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="settings-list">
+                    <div class="setting-item" onclick="setMonthlyBudget()">
+                        <div class="icon-box"><i class="ri-wallet-3-line"></i></div>
+                        মাসিক বাজেট সেট করুন
+                    </div>
+                    <div class="setting-item" onclick="toggleAppLock()">
+                        <div class="icon-box"><i class="ri-lock-password-line"></i></div>
+                        অ্যাপ লক (PIN) সেটআপ
+                    </div>
+                    <div class="setting-item" onclick="downloadReport()">
+                        <div class="icon-box"><i class="ri-printer-line"></i></div>
+                        হিসাব সেভ করুন (PDF)
+                    </div>
+                    <div class="setting-item danger" onclick="resetDataWithConfirmation()">
+                        <div class="icon-box"><i class="ri-delete-bin-line"></i></div>
+                        সব মুছে ফেলুন (Reset)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- নতুন এন্ট্রি মোডাল -->
+        <div id="modal-trans" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>নতুন এন্ট্রি</h3>
+                    <button onclick="closeModal('modal-trans')"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="type-toggle">
+                    <button class="type-btn active" id="btn-exp" onclick="setType('expense')">খরচ</button>
+                    <button class="type-btn" id="btn-inc" onclick="setType('income')">জমা</button>
+                </div>
+                <div class="input-group big-amount">
+                    <span>৳</span>
+                    <input type="number" id="inp-amount" placeholder="0" autofocus inputmode="numeric">
+                </div>
+                
+                <!-- ক্যাটাগরি লিস্ট -->
+                <div class="category-scroll" id="category-list"></div>
+                
+                <div class="input-group">
+                    <i class="ri-pencil-line"></i>
+                    <input type="text" id="inp-note" placeholder="কি বাবদ খরচ?">
+                </div>
+                <div class="input-group">
+                    <i class="ri-calendar-line"></i>
+                    <input type="date" id="inp-date">
+                </div>
+                <button class="btn-primary" onclick="saveTransaction()">সেভ করুন</button>
+            </div>
+        </div>
+
+        <!-- দিন বিস্তারিত মোডাল -->
+        <div id="modal-details" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3 id="detail-date-title">বিস্তারিত</h3>
+                    <button onclick="closeModal('modal-details')"><i class="ri-close-line"></i></button>
+                </div>
+                <div id="detail-list" class="detail-list"></div>
+            </div>
+        </div>
+
+        <!-- নোটস গ্রুপ এড মোডাল -->
+        <div id="modal-add-group" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>নতুন গ্রুপ যোগ করুন</h3>
+                    <button onclick="closeModal('modal-add-group')"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="input-group">
+                    <i class="ri-folder-add-line"></i>
+                    <input type="text" id="new-group-name" placeholder="গ্রুপের নাম (যেমন: কলেজ, মেস)">
+                </div>
+                <button class="btn-primary" onclick="addNewGroup()">যোগ করুন</button>
+            </div>
+        </div>
+
+        <!-- বাজেট সেট মোডাল -->
+        <div id="modal-budget" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>মাসিক বাজেট সেট করুন</h3>
+                    <button onclick="closeModal('modal-budget')"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="input-group big-amount">
+                    <span>৳</span>
+                    <input type="number" id="budget-amount" placeholder="0" autofocus inputmode="numeric">
+                </div>
+                <button class="btn-primary" onclick="saveBudget()">সেভ করুন</button>
+            </div>
+        </div>
+
+        <!-- পিন সেট মোডাল -->
+        <div id="modal-pin" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3 id="pin-modal-title">পিন সেটআপ</h3>
+                    <button onclick="closeModal('modal-pin')"><i class="ri-close-line"></i></button>
+                </div>
+                <div id="pin-input-container">
+                    <p id="pin-instruction">৪ সংখ্যার নতুন পিন দিন:</p>
+                    <div class="pin-input-group">
+                        <input type="password" id="pin-input" maxlength="4" inputmode="numeric" placeholder="****">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="savePin()">সেভ করুন</button>
+            </div>
+        </div>
+
+        <!-- PIN Verification for Reset Modal -->
+        <div id="modal-reset-pin" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>পিন ভেরিফিকেশন</h3>
+                    <button onclick="closeModal('modal-reset-pin')"><i class="ri-close-line"></i></button>
+                </div>
+                <div>
+                    <p id="pin-reset-instruction">রিসেট করার জন্য আপনার পিন দিন:</p>
+                    <div class="pin-input-group">
+                        <input type="password" id="pin-reset-input" maxlength="4" inputmode="numeric" placeholder="****">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="verifyPinForReset()">যাচাই করুন</button>
+            </div>
+        </div>
+
+        <!-- First Time Guide Popup -->
+        <div id="modal-first-time" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>স্বাগতম! 👋</h3>
+                    <button onclick="closeFirstTimeModal()"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="guide-popup-content">
+                    <p>PocketLikhi অ্যাপটি ব্যবহারের জন্য ধন্যবাদ। অ্যাপটি ব্যবহার করার আগে সংক্ষিপ্ত গাইডলাইনটি পড়ে নিন। এটি আপনার অভিজ্ঞতা আরও সমৃদ্ধ করবে।</p>
+                    <p>গাইডলাইনে আপনি পাবেন:</p>
+                    <ul>
+                        <li>হোম ট্যাবের ব্যাখ্যা</li>
+                        <li>ক্যালেন্ডার ও হিসাব</li>
+                        <li>জাদু ক্যালকুলেটর ব্যবহার</li>
+                        <li>নোটস এবং প্রোফাইল</li>
+                    </ul>
+                    <p>গাইডলাইনটি এখন পড়তে চান?</p>
+                </div>
+                <div class="guide-popup-actions">
+                    <button class="btn-outline" onclick="closeFirstTimeModal()">না, ধন্যবাদ</button>
+                    <button class="btn-primary" onclick="openGuideTab()">হ্যাঁ, গাইড পড়ুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Zadu Transaction Modal -->
+        <div id="modal-edit-zadu" class="modal-overlay hidden">
+            <div class="modal-card slide-up">
+                <div class="modal-header">
+                    <h3>লেনদেন সম্পাদনা</h3>
+                    <button onclick="closeModal('modal-edit-zadu')"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="zadu-form">
+                    <select id="edit-zadu-payer" class="zadu-select">
+                        <option value="">কে দিয়েছে?</option>
+                    </select>
+                    
+                    <div class="amount-input-wrapper">
+                        <span>৳</span>
+                        <input type="number" id="edit-zadu-amount" placeholder="0" inputmode="numeric">
+                    </div>
+                    
+                    <div class="for-whom-section">
+                        <label>কার কার জন্য?</label>
+                        <div id="edit-zadu-for-whom" class="checkbox-group"></div>
+                    </div>
+                    
+                    <input type="text" id="edit-zadu-note" class="zadu-input" placeholder="নোট (যেমন: দুপুরের খাবার)">
+                    
+                    <button onclick="updateZaduTransaction()" class="btn-primary">
+                        <i class="ri-save-line"></i> আপডেট করুন
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
